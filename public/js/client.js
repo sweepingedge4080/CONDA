@@ -66,6 +66,15 @@ function addSystemMessage(message) {
     smartScrollToBottom();
 }
 
+function resetToDisconnectedState() {
+    messageInput.disabled = true;
+    sendButton.disabled = true;
+    messageInput.value = '';
+    typingIndicator.textContent = '';
+    findPartnerBtn.disabled = false;
+    findPartnerBtn.textContent = 'Find Partner';
+}
+
 function sendMessage() {
     const message = messageInput.value.trim();
     if (!message || !currentRoom || !isConnected) {
@@ -89,20 +98,28 @@ function findPartner() {
 }
 
 function disconnect() {
-    if (currentRoom) {
-        socket.emit('leave-room', currentRoom);
-        addSystemMessage('Disconnected from chat');
+    if (!currentRoom) {
+        resetToDisconnectedState();
+        return;
     }
+    
+    // Tell the server we're disconnecting from this room
+    socket.emit('leave-room', currentRoom);
+    
+    // Reset UI immediately
+    resetToDisconnectedState();
+    
+    // Clear the chat but keep a system message
+    messagesDiv.innerHTML = '<div class="system-message">You disconnected. Click "Find Partner" to start again.</div>';
+    
+    // Reset state
+    currentRoom = null;
     isConnected = false;
-    messageInput.disabled = true;
-    sendButton.disabled = true;
+    userScrolledUp = false;
+    
+    // Update status
     statusDiv.textContent = 'Disconnected';
     statusDiv.style.background = 'rgba(244, 67, 54, 0.8)';
-    currentRoom = null;
-    findPartnerBtn.disabled = false;
-    findPartnerBtn.textContent = 'Find Partner';
-    messagesDiv.innerHTML = '<div class="system-message">Disconnected. Click "Find Partner" to start again.</div>';
-    userScrolledUp = false;
 }
 
 // Socket event handlers
@@ -155,6 +172,10 @@ socket.on('room-joined', (data) => {
         statusDiv.textContent = 'Waiting for partner...';
         statusDiv.style.background = 'rgba(255, 193, 7, 0.8)';
         addSystemMessage(data.message || 'Waiting for a partner...');
+        setTimeout(() => {
+            findPartnerBtn.disabled = false;
+            findPartnerBtn.textContent = 'Cancel';
+        }, 1000);
     } else {
         statusDiv.textContent = 'Connected with partner!';
         statusDiv.style.background = 'rgba(76, 175, 80, 0.8)';
@@ -181,8 +202,18 @@ socket.on('partner-disconnected', (data) => {
     sendButton.disabled = true;
     statusDiv.textContent = 'Partner disconnected';
     statusDiv.style.background = 'rgba(244, 67, 54, 0.8)';
-    addSystemMessage(data.message);
+    addSystemMessage(data.message || 'Your partner has disconnected');
+    findPartnerBtn.disabled = false;
+    findPartnerBtn.textContent = 'Find New Partner';
+});
+
+socket.on('room-left', (data) => {
+    addSystemMessage(data.message || 'You left the room');
+    resetToDisconnectedState();
     currentRoom = null;
+    isConnected = false;
+    statusDiv.textContent = 'Disconnected';
+    statusDiv.style.background = 'rgba(244, 67, 54, 0.8)';
     findPartnerBtn.disabled = false;
     findPartnerBtn.textContent = 'Find Partner';
 });
