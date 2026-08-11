@@ -53,6 +53,7 @@ function handleMessage(socket, io) {
     };
     
     saveMessage(roomId, messageData);
+    console.log(`💬 Message from ${socket.id} in room ${roomId}: ${message.trim()}`);
     
     // Broadcast to everyone in the room (including sender for UI consistency)
     io.to(roomId).emit('receive-message', {
