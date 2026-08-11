@@ -1,5 +1,3 @@
-# Create a render.yaml file
-cat > render.yaml << 'EOF'
 services:
   - type: web
     name: conda-chat
@@ -13,4 +11,3 @@ services:
         value: production
       - key: PORT
         value: 10000
-EOF
