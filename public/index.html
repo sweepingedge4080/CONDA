@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anonymous Random Chat</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🌐 Random Chat</h1>
+            <div class="status" id="status">Connecting...</div>
+        </header>
+        
+        <div class="chat-container">
+            <div class="messages" id="messages">
+                <div class="system-message">Click "Find Partner" to start chatting!</div>
+            </div>
+            
+            <div class="typing-indicator" id="typingIndicator"></div>
+            
+            <div class="input-area">
+                <input type="text" id="messageInput" placeholder="Type a message..." disabled>
+                <button id="sendButton" disabled>Send</button>
+                <button id="findPartnerBtn" class="primary-btn">Find Partner</button>
+                <button id="disconnectBtn" class="danger-btn">Disconnect</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/client.js"></script>
+</body>
+</html>
