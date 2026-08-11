@@ -7,6 +7,7 @@ function createRoom() {
     users: new Set(),
     messages: []
   });
+  console.log(`📝 Created room: ${roomId}`);
   return roomId;
 }
 
@@ -15,6 +16,7 @@ function joinRoom(roomId, socketId) {
   if (!room) return false;
   
   room.users.add(socketId);
+  console.log(`👤 User ${socketId} joined room ${roomId} (${room.users.size} users)`);
   return true;
 }
 
@@ -23,8 +25,11 @@ function leaveRoom(roomId, socketId) {
   if (!room) return;
   
   room.users.delete(socketId);
+  console.log(`👋 User ${socketId} left room ${roomId} (${room.users.size} users remaining)`);
+  
   if (room.users.size === 0) {
     rooms.delete(roomId);
+    console.log(`🗑️ Removed empty room: ${roomId}`);
   }
 }
 
@@ -32,14 +37,18 @@ function findAvailablePartner(socketId) {
   // Find a room with only 1 user (not including the current user)
   for (const [roomId, room] of rooms.entries()) {
     if (room.users.size === 1 && !room.users.has(socketId)) {
+      console.log(`🔍 Found available room: ${roomId} for user ${socketId}`);
       return roomId;
     }
   }
+  console.log(`🔍 No available rooms found for user ${socketId}`);
   return null;
 }
 
 function handleRoomJoin(socket, io) {
   socket.on('join-room', (roomId) => {
+    console.log(`📥 User ${socket.id} joining room: ${roomId || 'new'}`);
+    
     if (!roomId) {
       // Create new room if no roomId provided
       const newRoomId = createRoom();
@@ -76,23 +85,28 @@ function handleRoomJoin(socket, io) {
 
 function handleFindPartner(socket, io) {
   socket.on('find-partner', () => {
+    console.log(`🔍 User ${socket.id} looking for partner`);
+    
     // Leave current room if any
     const currentRoom = Array.from(socket.rooms).find(r => r !== socket.id);
     if (currentRoom) {
       leaveRoom(currentRoom, socket.id);
       socket.leave(currentRoom);
+      console.log(`🚪 Left room: ${currentRoom}`);
     }
     
-    // Find available partner
+    // Find available partner - only rooms with exactly 1 user
     const existingRoom = findAvailablePartner(socket.id);
     
     if (existingRoom) {
-      // Join existing room with a partner
+      console.log(`✅ Found existing room: ${existingRoom}`);
       joinRoom(existingRoom, socket.id);
       socket.join(existingRoom);
+      
+      // Notify both users
       io.to(existingRoom).emit('partner-found', {
         roomId: existingRoom,
-        message: 'You are now connected with a stranger!'
+        message: 'You are now connected!'
       });
       socket.emit('room-joined', { roomId: existingRoom, isAlone: false });
     } else {
@@ -100,6 +114,8 @@ function handleFindPartner(socket, io) {
       const newRoomId = createRoom();
       joinRoom(newRoomId, socket.id);
       socket.join(newRoomId);
+      console.log(`🆕 Created new room: ${newRoomId}`);
+      
       socket.emit('room-joined', { 
         roomId: newRoomId, 
         isAlone: true,
