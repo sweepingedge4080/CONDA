@@ -1,0 +1,16 @@
+{
+  "services": [
+    {
+      "type": "web",
+      "name": "conda-chat",
+      "runtime": "node",
+      "plan": "free",
+      "buildCommand": "npm install",
+      "startCommand": "npm start",
+      "envVars": {
+        "NODE_ENV": "production",
+        "PORT": "10000"
+      }
+    }
+  ]
+}
