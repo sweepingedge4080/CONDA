@@ -27,6 +27,15 @@ app.use(express.static('public'));
 app.use(express.json());
 app.use('/', routes);
 
+// Logging middleware
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+  next();
+});
+
+console.log('🚀 Server starting...');
+console.log(`📁 Current directory: ${__dirname}`);
+
 // Socket.IO connection handling
 io.on('connection', (socket) => {
   console.log('New client connected:', socket.id);
@@ -50,5 +59,6 @@ io.on('connection', (socket) => {
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`✅ Server running on port ${PORT}`);
+  console.log(`🌐 Open http://localhost:${PORT} in your browser`);
 });
