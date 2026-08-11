@@ -55,13 +55,13 @@ function handleMessage(socket, io) {
     saveMessage(roomId, messageData);
     console.log(`💬 Message from ${socket.id} in room ${roomId}: ${message.trim()}`);
     
-    // Broadcast to everyone in the room (including sender for UI consistency)
-    io.to(roomId).emit('receive-message', {
+    // Broadcast to everyone EXCEPT the sender (they get their own copy separately)
+    socket.to(roomId).emit('receive-message', {
       ...messageData,
       isOwn: false
     });
     
-    // Also send back to sender with isOwn flag
+    // Send ONLY to the sender with isOwn flag
     socket.emit('receive-message', {
       ...messageData,
       isOwn: true
