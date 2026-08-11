@@ -7,10 +7,12 @@ function addUser(socketId) {
     lastActivity: new Date().toISOString(),
     currentRoom: null
   });
+  console.log(`👤 User added: ${socketId} (${users.size} total users)`);
 }
 
 function removeUser(socketId) {
   users.delete(socketId);
+  console.log(`👤 User removed: ${socketId} (${users.size} total users)`);
 }
 
 function updateUserRoom(socketId, roomId) {
