@@ -12,78 +12,42 @@ const typingIndicator = document.getElementById('typingIndicator');
 let currentRoom = null;
 let isConnected = false;
 let typingTimeout = null;
+let userScrolledUp = false;
 
-// Socket event handlers
-socket.on('connect', () => {
-    statusDiv.textContent = 'Connected';
-    statusDiv.style.background = 'rgba(76, 175, 80, 0.8)';
-    findPartnerBtn.disabled = false;
-    addSystemMessage('Connected to server! Click "Find Partner" to start.');
-});
+// Scroll functions
+function scrollToBottom() {
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
 
-socket.on('disconnect', () => {
-    statusDiv.textContent = 'Disconnected';
-    statusDiv.style.background = 'rgba(244, 67, 54, 0.8)';
-    findPartnerBtn.disabled = true;
-    messageInput.disabled = true;
-    sendButton.disabled = true;
-    addSystemMessage('Disconnected from server.');
-});
+function smartScrollToBottom() {
+    if (!userScrolledUp) {
+        scrollToBottom();
+    }
+}
 
-socket.on('error', (error) => {
-    addSystemMessage('Error: ' + error);
-});
-
-// Room events
-socket.on('room-joined', (data) => {
-    currentRoom = data.roomId;
-    isConnected = !data.isAlone;
-    messageInput.disabled = !isConnected;
-    sendButton.disabled = !isConnected;
+// Add "Jump to Bottom" button
+function addScrollButton() {
+    const container = document.querySelector('.messages-wrapper');
+    const button = document.createElement('button');
+    button.id = 'scrollToBottomBtn';
+    button.textContent = '↓';
     
-    if (data.isAlone) {
-        statusDiv.textContent = 'Waiting for partner...';
-        statusDiv.style.background = 'rgba(255, 193, 7, 0.8)';
-        addSystemMessage(data.message || 'Waiting for a partner...');
-    } else {
-        statusDiv.textContent = 'Connected with partner!';
-        statusDiv.style.background = 'rgba(76, 175, 80, 0.8)';
-        addSystemMessage('Connected! Say hello to your new partner!');
-    }
-});
-
-socket.on('partner-found', (data) => {
-    isConnected = true;
-    messageInput.disabled = false;
-    sendButton.disabled = false;
-    statusDiv.textContent = 'Connected with partner!';
-    statusDiv.style.background = 'rgba(76, 175, 80, 0.8)';
-    addSystemMessage('🎉 ' + data.message);
-});
-
-socket.on('partner-disconnected', (data) => {
-    isConnected = false;
-    messageInput.disabled = true;
-    sendButton.disabled = true;
-    statusDiv.textContent = 'Partner disconnected';
-    statusDiv.style.background = 'rgba(244, 67, 54, 0.8)';
-    addSystemMessage(data.message);
-    currentRoom = null;
-});
-
-// Message events
-socket.on('receive-message', (data) => {
-    addMessage(data.message, data.isOwn);
-});
-
-// Typing events
-socket.on('user-typing', (data) => {
-    if (data.isTyping) {
-        typingIndicator.textContent = 'Partner is typing...';
-    } else {
-        typingIndicator.textContent = '';
-    }
-});
+    container.appendChild(button);
+    
+    button.addEventListener('click', () => {
+        scrollToBottom();
+        userScrolledUp = false;
+        button.style.display = 'none';
+    });
+    
+    messagesDiv.addEventListener('scroll', () => {
+        const isAtBottom = messagesDiv.scrollHeight - messagesDiv.scrollTop <= messagesDiv.clientHeight + 10;
+        userScrolledUp = !isAtBottom;
+        button.style.display = isAtBottom ? 'none' : 'block';
+    });
+    
+    return button;
+}
 
 // UI Functions
 function addMessage(message, isOwn) {
@@ -91,7 +55,7 @@ function addMessage(message, isOwn) {
     messageDiv.className = `message ${isOwn ? 'own' : 'other'}`;
     messageDiv.textContent = message;
     messagesDiv.appendChild(messageDiv);
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    smartScrollToBottom();
 }
 
 function addSystemMessage(message) {
@@ -99,12 +63,14 @@ function addSystemMessage(message) {
     systemDiv.className = 'system-message';
     systemDiv.textContent = message;
     messagesDiv.appendChild(systemDiv);
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    smartScrollToBottom();
 }
 
 function sendMessage() {
     const message = messageInput.value.trim();
-    if (!message || !currentRoom || !isConnected) return;
+    if (!message || !currentRoom || !isConnected) {
+        return;
+    }
     
     socket.emit('send-message', {
         roomId: currentRoom,
@@ -136,7 +102,104 @@ function disconnect() {
     findPartnerBtn.disabled = false;
     findPartnerBtn.textContent = 'Find Partner';
     messagesDiv.innerHTML = '<div class="system-message">Disconnected. Click "Find Partner" to start again.</div>';
+    userScrolledUp = false;
 }
+
+// Socket event handlers
+socket.on('connect', () => {
+    statusDiv.textContent = 'Connected';
+    statusDiv.style.background = 'rgba(76, 175, 80, 0.8)';
+    findPartnerBtn.disabled = false;
+    addSystemMessage('Connected to server! Click "Find Partner" to start.');
+});
+
+socket.on('disconnect', () => {
+    statusDiv.textContent = 'Disconnected';
+    statusDiv.style.background = 'rgba(244, 67, 54, 0.8)';
+    findPartnerBtn.disabled = true;
+    messageInput.disabled = true;
+    sendButton.disabled = true;
+    addSystemMessage('Disconnected from server.');
+});
+
+socket.on('connect_error', (error) => {
+    console.error('Connection error:', error);
+    statusDiv.textContent = 'Connection error';
+    statusDiv.style.background = 'rgba(244, 67, 54, 0.8)';
+    addSystemMessage('Unable to connect to server. Retrying...');
+});
+
+socket.on('reconnect', () => {
+    statusDiv.textContent = 'Reconnected';
+    statusDiv.style.background = 'rgba(76, 175, 80, 0.8)';
+    addSystemMessage('Reconnected to server!');
+    if (currentRoom) {
+        socket.emit('join-room', currentRoom);
+    }
+});
+
+socket.on('error', (error) => {
+    addSystemMessage('Error: ' + error);
+});
+
+// Room events
+socket.on('room-joined', (data) => {
+    currentRoom = data.roomId;
+    isConnected = !data.isAlone;
+    messageInput.disabled = !isConnected;
+    sendButton.disabled = !isConnected;
+    findPartnerBtn.disabled = true;
+    findPartnerBtn.textContent = 'Finding...';
+    
+    if (data.isAlone) {
+        statusDiv.textContent = 'Waiting for partner...';
+        statusDiv.style.background = 'rgba(255, 193, 7, 0.8)';
+        addSystemMessage(data.message || 'Waiting for a partner...');
+    } else {
+        statusDiv.textContent = 'Connected with partner!';
+        statusDiv.style.background = 'rgba(76, 175, 80, 0.8)';
+        addSystemMessage('Connected! Say hello to your new partner!');
+        findPartnerBtn.disabled = false;
+        findPartnerBtn.textContent = 'Find New Partner';
+    }
+});
+
+socket.on('partner-found', (data) => {
+    isConnected = true;
+    messageInput.disabled = false;
+    sendButton.disabled = false;
+    statusDiv.textContent = 'Connected with partner!';
+    statusDiv.style.background = 'rgba(76, 175, 80, 0.8)';
+    addSystemMessage('🎉 ' + data.message);
+    findPartnerBtn.disabled = false;
+    findPartnerBtn.textContent = 'Find New Partner';
+});
+
+socket.on('partner-disconnected', (data) => {
+    isConnected = false;
+    messageInput.disabled = true;
+    sendButton.disabled = true;
+    statusDiv.textContent = 'Partner disconnected';
+    statusDiv.style.background = 'rgba(244, 67, 54, 0.8)';
+    addSystemMessage(data.message);
+    currentRoom = null;
+    findPartnerBtn.disabled = false;
+    findPartnerBtn.textContent = 'Find Partner';
+});
+
+// Message events
+socket.on('receive-message', (data) => {
+    addMessage(data.message, data.isOwn);
+});
+
+// Typing events
+socket.on('user-typing', (data) => {
+    if (data.isTyping) {
+        typingIndicator.textContent = 'Partner is typing...';
+    } else {
+        typingIndicator.textContent = '';
+    }
+});
 
 // Event Listeners
 sendButton.addEventListener('click', sendMessage);
@@ -177,3 +240,8 @@ window.addEventListener('beforeunload', () => {
 // Initial state
 findPartnerBtn.disabled = true;
 statusDiv.textContent = 'Connecting...';
+
+// Initialize scroll button when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+    addScrollButton();
+});
