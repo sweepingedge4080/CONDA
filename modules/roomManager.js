@@ -87,11 +87,15 @@ function handleFindPartner(socket, io) {
   socket.on('find-partner', () => {
     console.log(`🔍 User ${socket.id} looking for partner`);
     
-    // Leave current room if any
+    // Check if user is already in a room
     const currentRoom = Array.from(socket.rooms).find(r => r !== socket.id);
     if (currentRoom) {
+      // If user is in a room and clicks "Find New Partner", leave current room
       leaveRoom(currentRoom, socket.id);
       socket.leave(currentRoom);
+      socket.to(currentRoom).emit('partner-disconnected', {
+        message: 'Your partner has disconnected'
+      });
       console.log(`🚪 Left room: ${currentRoom}`);
     }
     
