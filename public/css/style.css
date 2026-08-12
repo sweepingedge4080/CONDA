@@ -100,6 +100,9 @@ header h1 {
     word-wrap: break-word;
     animation: fadeIn 0.3s ease;
     font-size: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 
 @keyframes fadeIn {
@@ -118,6 +121,21 @@ header h1 {
     background: #e8eaf6;
     color: #333;
     border-bottom-left-radius: 5px;
+}
+
+.message .timestamp {
+    font-size: 10px;
+    opacity: 0.7;
+    align-self: flex-end;
+    margin-top: 2px;
+}
+
+.message.own .timestamp {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.message.other .timestamp {
+    color: rgba(0, 0, 0, 0.5);
 }
 
 .system-message {
@@ -171,9 +189,15 @@ header h1 {
     line-height: 1;
 }
 
-.emoji-btn:hover {
+.emoji-btn:hover:not(:disabled) {
     background: #e0e0e0;
     transform: scale(1.05);
+}
+
+.emoji-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
 }
 
 #messageInput {
