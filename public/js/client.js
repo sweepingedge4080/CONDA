@@ -16,6 +16,37 @@ let isConnected = false;
 let typingTimeout = null;
 let userScrolledUp = false;
 
+// Helper function to format timestamps
+function formatTime(timestamp) {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    // If today, show time only
+    if (date.toDateString() === now.toDateString()) {
+        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+    
+    // If yesterday
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    if (date.toDateString() === yesterday.toDateString()) {
+        return 'Yesterday ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+    
+    // If within last 7 days
+    if (diffDays < 7) {
+        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        return days[date.getDay()] + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+    
+    // Otherwise show full date
+    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
 // Scroll functions
 function scrollToBottom() {
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
@@ -75,10 +106,21 @@ function insertEmoji(emoji) {
 }
 
 // UI Functions
-function addMessage(message, isOwn) {
+function addMessage(message, isOwn, timestamp) {
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${isOwn ? 'own' : 'other'}`;
-    messageDiv.textContent = message;
+    
+    // Create message content with text and timestamp
+    const textSpan = document.createElement('span');
+    textSpan.textContent = message;
+    
+    const timeSpan = document.createElement('span');
+    timeSpan.className = 'timestamp';
+    timeSpan.textContent = formatTime(timestamp);
+    
+    messageDiv.appendChild(textSpan);
+    messageDiv.appendChild(timeSpan);
+    
     messagesDiv.appendChild(messageDiv);
     smartScrollToBottom();
 }
@@ -108,10 +150,13 @@ function sendMessage() {
         return;
     }
     
-    socket.emit('send-message', {
+    const messageData = {
         roomId: currentRoom,
-        message: message
-    });
+        message: message,
+        timestamp: new Date().toISOString()
+    };
+    
+    socket.emit('send-message', messageData);
     
     messageInput.value = '';
     messageInput.focus();
@@ -245,7 +290,7 @@ socket.on('room-left', (data) => {
 
 // Message events
 socket.on('receive-message', (data) => {
-    addMessage(data.message, data.isOwn);
+    addMessage(data.message, data.isOwn, data.timestamp);
 });
 
 // Typing events
