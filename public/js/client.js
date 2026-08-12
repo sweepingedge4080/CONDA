@@ -8,6 +8,8 @@ const findPartnerBtn = document.getElementById('findPartnerBtn');
 const disconnectBtn = document.getElementById('disconnectBtn');
 const statusDiv = document.getElementById('status');
 const typingIndicator = document.getElementById('typingIndicator');
+const emojiBtn = document.getElementById('emojiBtn');
+const emojiPicker = document.getElementById('emojiPicker');
 
 let currentRoom = null;
 let isConnected = false;
@@ -49,6 +51,29 @@ function addScrollButton() {
     return button;
 }
 
+// Emoji functions
+function toggleEmojiPicker() {
+    if (emojiPicker.style.display === 'none') {
+        emojiPicker.style.display = 'block';
+    } else {
+        emojiPicker.style.display = 'none';
+    }
+}
+
+function insertEmoji(emoji) {
+    const cursorPos = messageInput.selectionStart;
+    const textBefore = messageInput.value.substring(0, cursorPos);
+    const textAfter = messageInput.value.substring(cursorPos);
+    messageInput.value = textBefore + emoji + textAfter;
+    messageInput.focus();
+    const newCursorPos = cursorPos + emoji.length;
+    messageInput.setSelectionRange(newCursorPos, newCursorPos);
+    emojiPicker.style.display = 'none';
+    
+    // Trigger input event for typing indicator
+    messageInput.dispatchEvent(new Event('input'));
+}
+
 // UI Functions
 function addMessage(message, isOwn) {
     const messageDiv = document.createElement('div');
@@ -73,6 +98,8 @@ function resetToDisconnectedState() {
     typingIndicator.textContent = '';
     findPartnerBtn.disabled = false;
     findPartnerBtn.textContent = 'Find Partner';
+    emojiBtn.disabled = true;
+    emojiPicker.style.display = 'none';
 }
 
 function sendMessage() {
@@ -103,21 +130,12 @@ function disconnect() {
         return;
     }
     
-    // Tell the server we're disconnecting from this room
     socket.emit('leave-room', currentRoom);
-    
-    // Reset UI immediately
     resetToDisconnectedState();
-    
-    // Clear the chat but keep a system message
     messagesDiv.innerHTML = '<div class="system-message">You disconnected. Click "Find Partner" to start again.</div>';
-    
-    // Reset state
     currentRoom = null;
     isConnected = false;
     userScrolledUp = false;
-    
-    // Update status
     statusDiv.textContent = 'Disconnected';
     statusDiv.style.background = 'rgba(244, 67, 54, 0.8)';
 }
@@ -127,6 +145,7 @@ socket.on('connect', () => {
     statusDiv.textContent = 'Connected';
     statusDiv.style.background = 'rgba(76, 175, 80, 0.8)';
     findPartnerBtn.disabled = false;
+    emojiBtn.disabled = true;
     addSystemMessage('Connected to server! Click "Find Partner" to start.');
 });
 
@@ -136,6 +155,7 @@ socket.on('disconnect', () => {
     findPartnerBtn.disabled = true;
     messageInput.disabled = true;
     sendButton.disabled = true;
+    emojiBtn.disabled = true;
     addSystemMessage('Disconnected from server.');
 });
 
@@ -165,6 +185,7 @@ socket.on('room-joined', (data) => {
     isConnected = !data.isAlone;
     messageInput.disabled = !isConnected;
     sendButton.disabled = !isConnected;
+    emojiBtn.disabled = !isConnected;
     findPartnerBtn.disabled = true;
     findPartnerBtn.textContent = 'Finding...';
     
@@ -189,6 +210,7 @@ socket.on('partner-found', (data) => {
     isConnected = true;
     messageInput.disabled = false;
     sendButton.disabled = false;
+    emojiBtn.disabled = false;
     statusDiv.textContent = 'Connected with partner!';
     statusDiv.style.background = 'rgba(76, 175, 80, 0.8)';
     addSystemMessage('🎉 ' + data.message);
@@ -200,11 +222,13 @@ socket.on('partner-disconnected', (data) => {
     isConnected = false;
     messageInput.disabled = true;
     sendButton.disabled = true;
+    emojiBtn.disabled = true;
     statusDiv.textContent = 'Partner disconnected';
     statusDiv.style.background = 'rgba(244, 67, 54, 0.8)';
     addSystemMessage(data.message || 'Your partner has disconnected');
     findPartnerBtn.disabled = false;
     findPartnerBtn.textContent = 'Find New Partner';
+    emojiPicker.style.display = 'none';
 });
 
 socket.on('room-left', (data) => {
@@ -216,6 +240,7 @@ socket.on('room-left', (data) => {
     statusDiv.style.background = 'rgba(244, 67, 54, 0.8)';
     findPartnerBtn.disabled = false;
     findPartnerBtn.textContent = 'Find Partner';
+    emojiPicker.style.display = 'none';
 });
 
 // Message events
@@ -242,6 +267,21 @@ messageInput.addEventListener('keypress', (e) => {
 
 findPartnerBtn.addEventListener('click', findPartner);
 disconnectBtn.addEventListener('click', disconnect);
+emojiBtn.addEventListener('click', toggleEmojiPicker);
+
+// Emoji click handler
+document.querySelectorAll('.emoji-item').forEach(item => {
+    item.addEventListener('click', () => {
+        insertEmoji(item.dataset.emoji);
+    });
+});
+
+// Close emoji picker when clicking outside
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('.emoji-picker') && !e.target.closest('.emoji-btn')) {
+        emojiPicker.style.display = 'none';
+    }
+});
 
 // Typing indicator
 messageInput.addEventListener('input', () => {
@@ -271,6 +311,7 @@ window.addEventListener('beforeunload', () => {
 // Initial state
 findPartnerBtn.disabled = true;
 statusDiv.textContent = 'Connecting...';
+emojiBtn.disabled = true;
 
 // Initialize scroll button when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
