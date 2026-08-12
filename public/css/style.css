@@ -99,6 +99,7 @@ header h1 {
     max-width: 70%;
     word-wrap: break-word;
     animation: fadeIn 0.3s ease;
+    font-size: 15px;
 }
 
 @keyframes fadeIn {
@@ -139,11 +140,40 @@ header h1 {
 
 .input-area {
     display: flex;
-    gap: 10px;
-    align-items: center;
-    flex-wrap: wrap;
+    flex-direction: column;
+    gap: 8px;
     flex-shrink: 0;
     padding-top: 10px;
+}
+
+.input-wrapper {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    width: 100%;
+}
+
+.button-group {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.emoji-btn {
+    background: #f0f0f0;
+    border: 2px solid #e0e0e0;
+    border-radius: 25px;
+    padding: 10px 12px;
+    font-size: 20px;
+    cursor: pointer;
+    transition: all 0.3s;
+    flex-shrink: 0;
+    line-height: 1;
+}
+
+.emoji-btn:hover {
+    background: #e0e0e0;
+    transform: scale(1.05);
 }
 
 #messageInput {
@@ -174,6 +204,7 @@ button {
 #sendButton {
     background: #667eea;
     color: white;
+    flex: 1;
 }
 
 #sendButton:hover:not(:disabled) {
@@ -189,6 +220,7 @@ button {
 .primary-btn {
     background: #4CAF50;
     color: white;
+    flex: 1;
 }
 
 .primary-btn:hover:not(:disabled) {
@@ -204,6 +236,7 @@ button {
 .danger-btn {
     background: #f44336;
     color: white;
+    flex: 1;
 }
 
 .danger-btn:hover {
@@ -213,6 +246,52 @@ button {
 
 button:active {
     transform: translateY(0);
+}
+
+/* Emoji Picker */
+.emoji-picker {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    padding: 10px;
+    max-height: 200px;
+    overflow-y: auto;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    margin-top: 5px;
+}
+
+.emoji-picker::-webkit-scrollbar {
+    width: 6px;
+}
+
+.emoji-picker::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.emoji-picker::-webkit-scrollbar-thumb {
+    background: #667eea;
+    border-radius: 10px;
+}
+
+.emoji-category {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    gap: 2px;
+}
+
+.emoji-item {
+    font-size: 24px;
+    padding: 4px;
+    text-align: center;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background 0.2s;
+}
+
+.emoji-item:hover {
+    background: #f0f0f0;
+    transform: scale(1.2);
 }
 
 #scrollToBottomBtn {
@@ -247,7 +326,7 @@ button:active {
         border-radius: 0;
     }
     
-    .input-area {
+    .button-group {
         flex-direction: column;
     }
     
@@ -255,7 +334,11 @@ button:active {
         width: 100%;
     }
     
-    button {
+    .input-wrapper {
         width: 100%;
+    }
+
+    .emoji-category {
+        grid-template-columns: repeat(8, 1fr);
     }
 }
