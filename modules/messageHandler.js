@@ -13,7 +13,7 @@ function saveMessage(roomId, messageData) {
   
   room.messages.push({
     ...messageData,
-    timestamp: new Date().toISOString()
+    timestamp: messageData.timestamp || new Date().toISOString()
   });
   
   // Limit message history to 100 messages
@@ -26,7 +26,7 @@ function saveMessage(roomId, messageData) {
 
 function handleMessage(socket, io) {
   socket.on('send-message', (data) => {
-    const { roomId, message } = data;
+    const { roomId, message, timestamp } = data;
     
     if (!roomId || !message || message.trim() === '') {
       socket.emit('error', 'Invalid message');
@@ -49,13 +49,13 @@ function handleMessage(socket, io) {
     const messageData = {
       userId: socket.id,
       message: message.trim(),
-      timestamp: new Date().toISOString()
+      timestamp: timestamp || new Date().toISOString()
     };
     
     saveMessage(roomId, messageData);
     console.log(`💬 Message from ${socket.id} in room ${roomId}: ${message.trim()}`);
     
-    // Broadcast to everyone EXCEPT the sender (they get their own copy separately)
+    // Broadcast to everyone EXCEPT the sender
     socket.to(roomId).emit('receive-message', {
       ...messageData,
       isOwn: false
