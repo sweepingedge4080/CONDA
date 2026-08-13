@@ -25,7 +25,7 @@ let isDarkMode = false;
 
 // Giphy API Key - You need to get your own from https://developers.giphy.com/
 // For demo purposes, using a public test key - replace with your own
-const GIPHY_API_KEY = 'YOUR_GIPHY_API_KEY'; // Replace with your actual API key
+const GIPHY_API_KEY = 'PAOlsMlh2SUpxtBJ6wnwJr3QurG21KZK'; // Replace with your actual API key
 const GIPHY_API_URL = 'https://api.giphy.com/v1/gifs';
 
 // Theme functions
