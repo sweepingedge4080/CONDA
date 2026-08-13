@@ -332,6 +332,36 @@ header h1 {
     cursor: not-allowed;
 }
 
+/* Send button as circle */
+.send-btn {
+    background: var(--btn-primary);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 48px;
+    height: 48px;
+    font-size: 20px;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    padding: 0;
+}
+
+.send-btn:hover:not(:disabled) {
+    background: var(--btn-primary-hover);
+    transform: scale(1.05);
+}
+
+.send-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Regular buttons for Find Partner and Disconnect */
 button {
     padding: 12px 20px;
     border: none;
@@ -340,23 +370,6 @@ button {
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s;
-}
-
-#sendButton {
-    background: var(--btn-primary);
-    color: white;
-    flex: 1;
-}
-
-#sendButton:hover:not(:disabled) {
-    background: var(--btn-primary-hover);
-    transform: translateY(-2px);
-}
-
-#sendButton:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    transform: none;
 }
 
 .primary-btn {
@@ -464,26 +477,11 @@ button:active {
     transform: translateX(-50%) scale(1.1);
 }
 
+/* Mobile Responsive */
 @media (max-width: 600px) {
     .container {
         height: 100vh;
         border-radius: 0;
-    }
-    
-    .button-group {
-        flex-direction: column;
-    }
-    
-    #messageInput {
-        width: 100%;
-    }
-    
-    .input-wrapper {
-        width: 100%;
-    }
-
-    .emoji-category {
-        grid-template-columns: repeat(8, 1fr);
     }
 
     .header-right {
@@ -503,5 +501,117 @@ button:active {
 
     header h1 {
         font-size: 18px;
+    }
+
+    /* Button group: side by side */
+    .button-group {
+        display: flex;
+        flex-direction: row;
+        gap: 8px;
+        width: 100%;
+    }
+
+    .button-group button {
+        flex: 1;
+        font-size: 13px;
+        padding: 10px 12px;
+    }
+
+    /* Send button size on mobile */
+    .send-btn {
+        width: 44px;
+        height: 44px;
+        font-size: 18px;
+    }
+
+    .emoji-btn {
+        padding: 8px 10px;
+        font-size: 18px;
+    }
+
+    #messageInput {
+        font-size: 14px;
+        padding: 10px 12px;
+        min-width: 80px;
+    }
+
+    .input-area {
+        padding-top: 8px;
+        gap: 6px;
+    }
+
+    .messages {
+        min-height: 150px;
+        padding: 8px;
+    }
+
+    .message {
+        font-size: 14px;
+        padding: 8px 12px;
+        max-width: 80%;
+    }
+
+    .emoji-category {
+        grid-template-columns: repeat(8, 1fr);
+    }
+
+    .emoji-item {
+        font-size: 20px;
+        padding: 3px;
+    }
+}
+
+/* Extra small screens */
+@media (max-width: 400px) {
+    .button-group button {
+        font-size: 11px;
+        padding: 8px 6px;
+    }
+
+    .send-btn {
+        width: 38px;
+        height: 38px;
+        font-size: 15px;
+    }
+
+    .emoji-btn {
+        padding: 6px 8px;
+        font-size: 15px;
+    }
+
+    #messageInput {
+        font-size: 12px;
+        padding: 8px 10px;
+        min-width: 60px;
+    }
+
+    .status {
+        font-size: 10px;
+        padding: 3px 8px;
+    }
+
+    header h1 {
+        font-size: 15px;
+    }
+
+    .theme-btn {
+        width: 28px;
+        height: 28px;
+        font-size: 14px;
+    }
+
+    .message {
+        font-size: 12px;
+        padding: 6px 10px;
+        max-width: 85%;
+    }
+
+    .emoji-category {
+        grid-template-columns: repeat(6, 1fr);
+    }
+
+    .emoji-item {
+        font-size: 18px;
+        padding: 2px;
     }
 }
