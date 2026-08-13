@@ -26,7 +26,7 @@ function saveMessage(roomId, messageData) {
 
 function handleMessage(socket, io) {
   socket.on('send-message', (data) => {
-    const { roomId, message, timestamp } = data;
+    const { roomId, message, isGif, timestamp } = data;
     
     if (!roomId || !message || message.trim() === '') {
       socket.emit('error', 'Invalid message');
@@ -49,11 +49,12 @@ function handleMessage(socket, io) {
     const messageData = {
       userId: socket.id,
       message: message.trim(),
+      isGif: isGif || false,  // Preserve the GIF flag
       timestamp: timestamp || new Date().toISOString()
     };
     
     saveMessage(roomId, messageData);
-    console.log(`💬 Message from ${socket.id} in room ${roomId}: ${message.trim()}`);
+    console.log(`💬 Message from ${socket.id} in room ${roomId}: ${message.trim().substring(0, 50)}${message.length > 50 ? '...' : ''}`);
     
     // Broadcast to everyone EXCEPT the sender
     socket.to(roomId).emit('receive-message', {
