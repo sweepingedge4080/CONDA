@@ -53,6 +53,7 @@ function scrollToBottom() {
 }
 
 function smartScrollToBottom() {
+    // Only auto-scroll if user hasn't manually scrolled up
     if (!userScrolledUp) {
         scrollToBottom();
     }
@@ -75,8 +76,14 @@ function addScrollButton() {
     
     messagesDiv.addEventListener('scroll', () => {
         const isAtBottom = messagesDiv.scrollHeight - messagesDiv.scrollTop <= messagesDiv.clientHeight + 10;
-        userScrolledUp = !isAtBottom;
-        button.style.display = isAtBottom ? 'none' : 'block';
+        // Only update userScrolledUp if they manually scrolled
+        if (!isAtBottom) {
+            userScrolledUp = true;
+            button.style.display = 'block';
+        } else {
+            userScrolledUp = false;
+            button.style.display = 'none';
+        }
     });
     
     return button;
@@ -122,7 +129,9 @@ function addMessage(message, isOwn, timestamp) {
     messageDiv.appendChild(timeSpan);
     
     messagesDiv.appendChild(messageDiv);
-    smartScrollToBottom();
+    
+    // Scroll to bottom after adding message
+    scrollToBottom();
 }
 
 function addSystemMessage(message) {
@@ -130,7 +139,9 @@ function addSystemMessage(message) {
     systemDiv.className = 'system-message';
     systemDiv.textContent = message;
     messagesDiv.appendChild(systemDiv);
-    smartScrollToBottom();
+    
+    // Scroll to bottom after adding system message
+    scrollToBottom();
 }
 
 function resetToDisconnectedState() {
