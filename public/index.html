@@ -29,6 +29,7 @@
             <div class="input-area">
                 <div class="input-wrapper">
                     <button id="emojiBtn" class="emoji-btn" title="Insert emoji">😊</button>
+                    <button id="gifBtn" class="gif-btn" title="Insert GIF">🎬</button>
                     <input type="text" id="messageInput" placeholder="Type a message..." disabled>
                     <button id="sendButton" class="send-btn" disabled>➤</button>
                 </div>
@@ -316,6 +317,17 @@
                     <span class="emoji-item" data-emoji="🍁">🍁</span>
                     <span class="emoji-item" data-emoji="🍂">🍂</span>
                     <span class="emoji-item" data-emoji="🍃">🍃</span>
+                </div>
+            </div>
+            
+            <!-- GIF Picker -->
+            <div id="gifPicker" class="gif-picker" style="display: none;">
+                <div class="gif-search">
+                    <input type="text" id="gifSearchInput" placeholder="Search GIFs..." class="gif-search-input">
+                    <button id="gifSearchBtn" class="gif-search-btn">Search</button>
+                </div>
+                <div id="gifResults" class="gif-results">
+                    <div class="gif-loading">Loading trending GIFs...</div>
                 </div>
             </div>
         </div>
