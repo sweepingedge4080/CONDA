@@ -10,6 +10,11 @@ const statusDiv = document.getElementById('status');
 const typingIndicator = document.getElementById('typingIndicator');
 const emojiBtn = document.getElementById('emojiBtn');
 const emojiPicker = document.getElementById('emojiPicker');
+const gifBtn = document.getElementById('gifBtn');
+const gifPicker = document.getElementById('gifPicker');
+const gifSearchInput = document.getElementById('gifSearchInput');
+const gifSearchBtn = document.getElementById('gifSearchBtn');
+const gifResults = document.getElementById('gifResults');
 const themeToggle = document.getElementById('themeToggle');
 
 let currentRoom = null;
@@ -17,6 +22,11 @@ let isConnected = false;
 let typingTimeout = null;
 let userScrolledUp = false;
 let isDarkMode = false;
+
+// Giphy API Key - You need to get your own from https://developers.giphy.com/
+// For demo purposes, using a public test key - replace with your own
+const GIPHY_API_KEY = 'YOUR_GIPHY_API_KEY'; // Replace with your actual API key
+const GIPHY_API_URL = 'https://api.giphy.com/v1/gifs';
 
 // Theme functions
 function toggleTheme() {
@@ -78,13 +88,11 @@ function formatTime(timestamp) {
 
 // Scroll functions
 function scrollToBottom() {
-    // Use requestAnimationFrame to ensure DOM is updated before scrolling
     requestAnimationFrame(() => {
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
     });
 }
 
-// Force scroll to bottom immediately
 function forceScrollToBottom() {
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
@@ -106,7 +114,6 @@ function addScrollButton() {
     
     messagesDiv.addEventListener('scroll', () => {
         const isAtBottom = messagesDiv.scrollHeight - messagesDiv.scrollTop <= messagesDiv.clientHeight + 10;
-        // Only update userScrolledUp if they manually scrolled
         if (!isAtBottom) {
             userScrolledUp = true;
             button.style.display = 'block';
@@ -123,6 +130,7 @@ function addScrollButton() {
 function toggleEmojiPicker() {
     if (emojiPicker.style.display === 'none') {
         emojiPicker.style.display = 'block';
+        gifPicker.style.display = 'none';
     } else {
         emojiPicker.style.display = 'none';
     }
@@ -137,30 +145,108 @@ function insertEmoji(emoji) {
     const newCursorPos = cursorPos + emoji.length;
     messageInput.setSelectionRange(newCursorPos, newCursorPos);
     emojiPicker.style.display = 'none';
-    
-    // Trigger input event for typing indicator
     messageInput.dispatchEvent(new Event('input'));
 }
 
+// GIF functions
+function toggleGifPicker() {
+    if (gifPicker.style.display === 'none') {
+        gifPicker.style.display = 'block';
+        emojiPicker.style.display = 'none';
+        loadTrendingGifs();
+    } else {
+        gifPicker.style.display = 'none';
+    }
+}
+
+async function loadTrendingGifs() {
+    gifResults.innerHTML = '<div class="gif-loading">Loading trending GIFs...</div>';
+    try {
+        const response = await fetch(`${GIPHY_API_URL}/trending?api_key=${GIPHY_API_KEY}&limit=30&rating=g`);
+        const data = await response.json();
+        displayGifs(data.data);
+    } catch (error) {
+        console.error('Error loading trending GIFs:', error);
+        gifResults.innerHTML = '<div class="gif-loading">Failed to load GIFs. Please try searching.</div>';
+    }
+}
+
+async function searchGifs(query) {
+    if (!query.trim()) {
+        loadTrendingGifs();
+        return;
+    }
+    gifResults.innerHTML = '<div class="gif-loading">Searching...</div>';
+    try {
+        const response = await fetch(`${GIPHY_API_URL}/search?api_key=${GIPHY_API_KEY}&q=${encodeURIComponent(query)}&limit=30&rating=g`);
+        const data = await response.json();
+        displayGifs(data.data);
+    } catch (error) {
+        console.error('Error searching GIFs:', error);
+        gifResults.innerHTML = '<div class="gif-loading">Search failed. Please try again.</div>';
+    }
+}
+
+function displayGifs(gifs) {
+    if (!gifs || gifs.length === 0) {
+        gifResults.innerHTML = '<div class="gif-loading">No GIFs found</div>';
+        return;
+    }
+    gifResults.innerHTML = '';
+    gifs.forEach(gif => {
+        const img = document.createElement('img');
+        img.className = 'gif-item';
+        img.src = gif.images.fixed_width_small.url;
+        img.alt = gif.title || 'GIF';
+        img.title = gif.title || 'GIF';
+        img.addEventListener('click', () => {
+            sendGif(gif.images.fixed_width.url);
+        });
+        gifResults.appendChild(img);
+    });
+}
+
+function sendGif(gifUrl) {
+    if (!currentRoom || !isConnected) {
+        return;
+    }
+    
+    const messageData = {
+        roomId: currentRoom,
+        message: gifUrl,
+        isGif: true,
+        timestamp: new Date().toISOString()
+    };
+    
+    socket.emit('send-message', messageData);
+    gifPicker.style.display = 'none';
+    gifSearchInput.value = '';
+}
+
 // UI Functions
-function addMessage(message, isOwn, timestamp) {
+function addMessage(message, isOwn, timestamp, isGif) {
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${isOwn ? 'own' : 'other'}`;
     
-    // Create message content with text and timestamp
-    const textSpan = document.createElement('span');
-    textSpan.textContent = message;
+    if (isGif) {
+        const img = document.createElement('img');
+        img.className = 'gif-message';
+        img.src = message;
+        img.alt = 'GIF';
+        img.loading = 'lazy';
+        messageDiv.appendChild(img);
+    } else {
+        const textSpan = document.createElement('span');
+        textSpan.textContent = message;
+        messageDiv.appendChild(textSpan);
+    }
     
     const timeSpan = document.createElement('span');
     timeSpan.className = 'timestamp';
     timeSpan.textContent = formatTime(timestamp);
-    
-    messageDiv.appendChild(textSpan);
     messageDiv.appendChild(timeSpan);
     
     messagesDiv.appendChild(messageDiv);
-    
-    // Force scroll to bottom immediately
     forceScrollToBottom();
 }
 
@@ -169,8 +255,6 @@ function addSystemMessage(message) {
     systemDiv.className = 'system-message';
     systemDiv.textContent = message;
     messagesDiv.appendChild(systemDiv);
-    
-    // Force scroll to bottom immediately
     forceScrollToBottom();
 }
 
@@ -182,7 +266,9 @@ function resetToDisconnectedState() {
     findPartnerBtn.disabled = false;
     findPartnerBtn.textContent = 'Find Partner';
     emojiBtn.disabled = true;
+    gifBtn.disabled = true;
     emojiPicker.style.display = 'none';
+    gifPicker.style.display = 'none';
 }
 
 function sendMessage() {
@@ -194,15 +280,13 @@ function sendMessage() {
     const messageData = {
         roomId: currentRoom,
         message: message,
+        isGif: false,
         timestamp: new Date().toISOString()
     };
     
     socket.emit('send-message', messageData);
-    
     messageInput.value = '';
     messageInput.focus();
-    
-    // Force scroll to bottom after sending
     setTimeout(() => {
         forceScrollToBottom();
     }, 10);
@@ -238,6 +322,7 @@ socket.on('connect', () => {
     statusDiv.style.background = 'rgba(76, 175, 80, 0.8)';
     findPartnerBtn.disabled = false;
     emojiBtn.disabled = true;
+    gifBtn.disabled = true;
     addSystemMessage('Connected to server! Click "Find Partner" to start.');
 });
 
@@ -248,6 +333,7 @@ socket.on('disconnect', () => {
     messageInput.disabled = true;
     sendButton.disabled = true;
     emojiBtn.disabled = true;
+    gifBtn.disabled = true;
     addSystemMessage('Disconnected from server.');
 });
 
@@ -278,6 +364,7 @@ socket.on('room-joined', (data) => {
     messageInput.disabled = !isConnected;
     sendButton.disabled = !isConnected;
     emojiBtn.disabled = !isConnected;
+    gifBtn.disabled = !isConnected;
     findPartnerBtn.disabled = true;
     findPartnerBtn.textContent = 'Finding...';
     
@@ -304,6 +391,7 @@ socket.on('partner-found', (data) => {
     messageInput.disabled = false;
     sendButton.disabled = false;
     emojiBtn.disabled = false;
+    gifBtn.disabled = false;
     statusDiv.textContent = 'Connected with partner!';
     statusDiv.style.background = 'rgba(76, 175, 80, 0.8)';
     addSystemMessage('🎉 ' + data.message);
@@ -317,12 +405,14 @@ socket.on('partner-disconnected', (data) => {
     messageInput.disabled = true;
     sendButton.disabled = true;
     emojiBtn.disabled = true;
+    gifBtn.disabled = true;
     statusDiv.textContent = 'Partner disconnected';
     statusDiv.style.background = 'rgba(244, 67, 54, 0.8)';
     addSystemMessage(data.message || 'Your partner has disconnected');
     findPartnerBtn.disabled = false;
     findPartnerBtn.textContent = 'Find New Partner';
     emojiPicker.style.display = 'none';
+    gifPicker.style.display = 'none';
     forceScrollToBottom();
 });
 
@@ -336,12 +426,13 @@ socket.on('room-left', (data) => {
     findPartnerBtn.disabled = false;
     findPartnerBtn.textContent = 'Find Partner';
     emojiPicker.style.display = 'none';
+    gifPicker.style.display = 'none';
     forceScrollToBottom();
 });
 
 // Message events
 socket.on('receive-message', (data) => {
-    addMessage(data.message, data.isOwn, data.timestamp);
+    addMessage(data.message, data.isOwn, data.timestamp, data.isGif || false);
 });
 
 // Typing events
@@ -358,14 +449,24 @@ sendButton.addEventListener('click', sendMessage);
 messageInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
         sendMessage();
-        e.preventDefault(); // Prevent default form submission
+        e.preventDefault();
     }
 });
 
 findPartnerBtn.addEventListener('click', findPartner);
 disconnectBtn.addEventListener('click', disconnect);
 emojiBtn.addEventListener('click', toggleEmojiPicker);
+gifBtn.addEventListener('click', toggleGifPicker);
 themeToggle.addEventListener('click', toggleTheme);
+gifSearchBtn.addEventListener('click', () => {
+    searchGifs(gifSearchInput.value);
+});
+gifSearchInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        searchGifs(gifSearchInput.value);
+        e.preventDefault();
+    }
+});
 
 // Emoji click handler
 document.querySelectorAll('.emoji-item').forEach(item => {
@@ -378,6 +479,9 @@ document.querySelectorAll('.emoji-item').forEach(item => {
 document.addEventListener('click', (e) => {
     if (!e.target.closest('.emoji-picker') && !e.target.closest('.emoji-btn')) {
         emojiPicker.style.display = 'none';
+    }
+    if (!e.target.closest('.gif-picker') && !e.target.closest('.gif-btn')) {
+        gifPicker.style.display = 'none';
     }
 });
 
@@ -413,15 +517,15 @@ loadTheme();
 findPartnerBtn.disabled = true;
 statusDiv.textContent = 'Connecting...';
 emojiBtn.disabled = true;
+gifBtn.disabled = true;
 
 // Initialize scroll button when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
     addScrollButton();
-    // Force scroll to bottom after everything loads
     setTimeout(forceScrollToBottom, 100);
 });
 
-// Also force scroll to bottom when window resizes
+// Force scroll on resize
 window.addEventListener('resize', () => {
     if (!userScrolledUp) {
         forceScrollToBottom();
