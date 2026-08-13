@@ -23,9 +23,8 @@ let typingTimeout = null;
 let userScrolledUp = false;
 let isDarkMode = false;
 
-// Giphy API Key - You need to get your own from https://developers.giphy.com/
-// For demo purposes, using a public test key - replace with your own
-const GIPHY_API_KEY = 'PAOlsMlh2SUpxtBJ6wnwJr3QurG21KZK'; // Replace with your actual API key
+// Giphy API Key
+const GIPHY_API_KEY = 'PAOlsMlh2SUpxtBJ6wnwJr3QurG21KZK';
 const GIPHY_API_URL = 'https://api.giphy.com/v1/gifs';
 
 // Theme functions
@@ -64,25 +63,21 @@ function formatTime(timestamp) {
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
 
-    // If today, show time only
     if (date.toDateString() === now.toDateString()) {
         return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
     
-    // If yesterday
     const yesterday = new Date(now);
     yesterday.setDate(yesterday.getDate() - 1);
     if (date.toDateString() === yesterday.toDateString()) {
         return 'Yesterday ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
     
-    // If within last 7 days
     if (diffDays < 7) {
         const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
         return days[date.getDay()] + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
     
-    // Otherwise show full date
     return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
@@ -228,12 +223,17 @@ function addMessage(message, isOwn, timestamp, isGif) {
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${isOwn ? 'own' : 'other'}`;
     
-    if (isGif) {
+    // Check if it's a GIF by the flag or by checking if it's a URL
+    if (isGif || (typeof message === 'string' && (message.startsWith('http') && (message.includes('.gif') || message.includes('giphy.com') || message.includes('media') || message.includes('giphy'))))) {
         const img = document.createElement('img');
         img.className = 'gif-message';
         img.src = message;
         img.alt = 'GIF';
         img.loading = 'lazy';
+        img.style.maxWidth = '100%';
+        img.style.borderRadius = '8px';
+        img.style.maxHeight = '200px';
+        img.style.objectFit = 'contain';
         messageDiv.appendChild(img);
     } else {
         const textSpan = document.createElement('span');
@@ -475,7 +475,7 @@ document.querySelectorAll('.emoji-item').forEach(item => {
     });
 });
 
-// Close emoji picker when clicking outside
+// Close pickers when clicking outside
 document.addEventListener('click', (e) => {
     if (!e.target.closest('.emoji-picker') && !e.target.closest('.emoji-btn')) {
         emojiPicker.style.display = 'none';
