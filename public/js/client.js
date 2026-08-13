@@ -78,14 +78,15 @@ function formatTime(timestamp) {
 
 // Scroll functions
 function scrollToBottom() {
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    // Use requestAnimationFrame to ensure DOM is updated before scrolling
+    requestAnimationFrame(() => {
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    });
 }
 
-function smartScrollToBottom() {
-    // Only auto-scroll if user hasn't manually scrolled up
-    if (!userScrolledUp) {
-        scrollToBottom();
-    }
+// Force scroll to bottom immediately
+function forceScrollToBottom() {
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
 
 // Add "Jump to Bottom" button
@@ -98,7 +99,7 @@ function addScrollButton() {
     container.appendChild(button);
     
     button.addEventListener('click', () => {
-        scrollToBottom();
+        forceScrollToBottom();
         userScrolledUp = false;
         button.style.display = 'none';
     });
@@ -159,8 +160,8 @@ function addMessage(message, isOwn, timestamp) {
     
     messagesDiv.appendChild(messageDiv);
     
-    // Scroll to bottom after adding message
-    scrollToBottom();
+    // Force scroll to bottom immediately
+    forceScrollToBottom();
 }
 
 function addSystemMessage(message) {
@@ -169,8 +170,8 @@ function addSystemMessage(message) {
     systemDiv.textContent = message;
     messagesDiv.appendChild(systemDiv);
     
-    // Scroll to bottom after adding system message
-    scrollToBottom();
+    // Force scroll to bottom immediately
+    forceScrollToBottom();
 }
 
 function resetToDisconnectedState() {
@@ -200,6 +201,11 @@ function sendMessage() {
     
     messageInput.value = '';
     messageInput.focus();
+    
+    // Force scroll to bottom after sending
+    setTimeout(() => {
+        forceScrollToBottom();
+    }, 10);
 }
 
 function findPartner() {
@@ -223,6 +229,7 @@ function disconnect() {
     userScrolledUp = false;
     statusDiv.textContent = 'Disconnected';
     statusDiv.style.background = 'rgba(244, 67, 54, 0.8)';
+    forceScrollToBottom();
 }
 
 // Socket event handlers
@@ -289,6 +296,7 @@ socket.on('room-joined', (data) => {
         findPartnerBtn.disabled = false;
         findPartnerBtn.textContent = 'Find New Partner';
     }
+    forceScrollToBottom();
 });
 
 socket.on('partner-found', (data) => {
@@ -301,6 +309,7 @@ socket.on('partner-found', (data) => {
     addSystemMessage('🎉 ' + data.message);
     findPartnerBtn.disabled = false;
     findPartnerBtn.textContent = 'Find New Partner';
+    forceScrollToBottom();
 });
 
 socket.on('partner-disconnected', (data) => {
@@ -314,6 +323,7 @@ socket.on('partner-disconnected', (data) => {
     findPartnerBtn.disabled = false;
     findPartnerBtn.textContent = 'Find New Partner';
     emojiPicker.style.display = 'none';
+    forceScrollToBottom();
 });
 
 socket.on('room-left', (data) => {
@@ -326,6 +336,7 @@ socket.on('room-left', (data) => {
     findPartnerBtn.disabled = false;
     findPartnerBtn.textContent = 'Find Partner';
     emojiPicker.style.display = 'none';
+    forceScrollToBottom();
 });
 
 // Message events
@@ -347,6 +358,7 @@ sendButton.addEventListener('click', sendMessage);
 messageInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
         sendMessage();
+        e.preventDefault(); // Prevent default form submission
     }
 });
 
@@ -405,4 +417,13 @@ emojiBtn.disabled = true;
 // Initialize scroll button when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
     addScrollButton();
+    // Force scroll to bottom after everything loads
+    setTimeout(forceScrollToBottom, 100);
+});
+
+// Also force scroll to bottom when window resizes
+window.addEventListener('resize', () => {
+    if (!userScrolledUp) {
+        forceScrollToBottom();
+    }
 });
