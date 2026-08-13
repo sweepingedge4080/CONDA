@@ -10,11 +10,40 @@ const statusDiv = document.getElementById('status');
 const typingIndicator = document.getElementById('typingIndicator');
 const emojiBtn = document.getElementById('emojiBtn');
 const emojiPicker = document.getElementById('emojiPicker');
+const themeToggle = document.getElementById('themeToggle');
 
 let currentRoom = null;
 let isConnected = false;
 let typingTimeout = null;
 let userScrolledUp = false;
+let isDarkMode = false;
+
+// Theme functions
+function toggleTheme() {
+    isDarkMode = !isDarkMode;
+    if (isDarkMode) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        themeToggle.textContent = '☀️';
+        localStorage.setItem('theme', 'dark');
+    } else {
+        document.documentElement.removeAttribute('data-theme');
+        themeToggle.textContent = '🌙';
+        localStorage.setItem('theme', 'light');
+    }
+}
+
+function loadTheme() {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+        isDarkMode = true;
+        document.documentElement.setAttribute('data-theme', 'dark');
+        themeToggle.textContent = '☀️';
+    } else {
+        isDarkMode = false;
+        document.documentElement.removeAttribute('data-theme');
+        themeToggle.textContent = '🌙';
+    }
+}
 
 // Helper function to format timestamps
 function formatTime(timestamp) {
@@ -324,6 +353,7 @@ messageInput.addEventListener('keypress', (e) => {
 findPartnerBtn.addEventListener('click', findPartner);
 disconnectBtn.addEventListener('click', disconnect);
 emojiBtn.addEventListener('click', toggleEmojiPicker);
+themeToggle.addEventListener('click', toggleTheme);
 
 // Emoji click handler
 document.querySelectorAll('.emoji-item').forEach(item => {
@@ -363,6 +393,9 @@ window.addEventListener('beforeunload', () => {
         socket.emit('leave-room', currentRoom);
     }
 });
+
+// Load saved theme on startup
+loadTheme();
 
 // Initial state
 findPartnerBtn.disabled = true;
