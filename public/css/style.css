@@ -211,6 +211,12 @@ header h1 {
     gap: 4px;
 }
 
+.message img.gif-message {
+    max-width: 100%;
+    border-radius: 8px;
+    margin: 2px 0;
+}
+
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
@@ -272,7 +278,7 @@ header h1 {
 
 .input-wrapper {
     display: flex;
-    gap: 8px;
+    gap: 6px;
     align-items: center;
     width: 100%;
 }
@@ -283,24 +289,29 @@ header h1 {
     flex-wrap: wrap;
 }
 
-.emoji-btn {
+.emoji-btn, .gif-btn {
     background: var(--emoji-bg);
     border: 2px solid var(--emoji-border);
     border-radius: 25px;
-    padding: 10px 12px;
-    font-size: 20px;
+    padding: 10px 10px;
+    font-size: 18px;
     cursor: pointer;
     transition: all 0.3s;
     flex-shrink: 0;
     line-height: 1;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.emoji-btn:hover:not(:disabled) {
+.emoji-btn:hover:not(:disabled), .gif-btn:hover:not(:disabled) {
     background: var(--emoji-hover);
     transform: scale(1.05);
 }
 
-.emoji-btn:disabled {
+.emoji-btn:disabled, .gif-btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
     transform: none;
@@ -314,7 +325,7 @@ header h1 {
     outline: none;
     font-size: 16px;
     transition: border-color 0.3s, background 0.3s, color 0.3s;
-    min-width: 120px;
+    min-width: 80px;
     background: var(--bg-input);
     color: var(--text-primary);
 }
@@ -338,9 +349,9 @@ header h1 {
     color: white;
     border: none;
     border-radius: 50%;
-    width: 48px;
-    height: 48px;
-    font-size: 20px;
+    width: 44px;
+    height: 44px;
+    font-size: 18px;
     cursor: pointer;
     transition: all 0.3s;
     display: flex;
@@ -451,6 +462,113 @@ button:active {
     transform: scale(1.2);
 }
 
+/* GIF Picker */
+.gif-picker {
+    background: var(--bg-messages);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 10px;
+    max-height: 300px;
+    overflow-y: auto;
+    box-shadow: 0 4px 12px var(--shadow-color);
+    margin-top: 5px;
+    transition: background 0.3s ease, border-color 0.3s ease;
+}
+
+.gif-picker::-webkit-scrollbar {
+    width: 6px;
+}
+
+.gif-picker::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+    border-radius: 10px;
+}
+
+.gif-picker::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 10px;
+}
+
+.gif-search {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.gif-search-input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 2px solid var(--border-color);
+    border-radius: 20px;
+    outline: none;
+    font-size: 14px;
+    background: var(--bg-input);
+    color: var(--text-primary);
+    transition: border-color 0.3s;
+}
+
+.gif-search-input:focus {
+    border-color: var(--btn-primary);
+}
+
+.gif-search-btn {
+    padding: 8px 16px;
+    background: var(--btn-primary);
+    color: white;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: background 0.3s;
+}
+
+.gif-search-btn:hover {
+    background: var(--btn-primary-hover);
+}
+
+.gif-results {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    max-height: 220px;
+    overflow-y: auto;
+}
+
+.gif-results::-webkit-scrollbar {
+    width: 6px;
+}
+
+.gif-results::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+    border-radius: 10px;
+}
+
+.gif-results::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 10px;
+}
+
+.gif-item {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.gif-item:hover {
+    transform: scale(1.05);
+}
+
+.gif-loading {
+    grid-column: 1 / -1;
+    text-align: center;
+    color: var(--text-muted);
+    padding: 20px;
+}
+
 #scrollToBottomBtn {
     position: sticky;
     bottom: 10px;
@@ -503,7 +621,6 @@ button:active {
         font-size: 18px;
     }
 
-    /* Button group: side by side */
     .button-group {
         display: flex;
         flex-direction: row;
@@ -517,22 +634,23 @@ button:active {
         padding: 10px 12px;
     }
 
-    /* Send button size on mobile */
     .send-btn {
-        width: 44px;
-        height: 44px;
-        font-size: 18px;
+        width: 40px;
+        height: 40px;
+        font-size: 16px;
     }
 
-    .emoji-btn {
-        padding: 8px 10px;
-        font-size: 18px;
+    .emoji-btn, .gif-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 16px;
+        padding: 8px;
     }
 
     #messageInput {
         font-size: 14px;
         padding: 10px 12px;
-        min-width: 80px;
+        min-width: 60px;
     }
 
     .input-area {
@@ -559,6 +677,10 @@ button:active {
         font-size: 20px;
         padding: 3px;
     }
+
+    .gif-results {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
 
 /* Extra small screens */
@@ -569,20 +691,22 @@ button:active {
     }
 
     .send-btn {
-        width: 38px;
-        height: 38px;
-        font-size: 15px;
+        width: 36px;
+        height: 36px;
+        font-size: 14px;
     }
 
-    .emoji-btn {
-        padding: 6px 8px;
-        font-size: 15px;
+    .emoji-btn, .gif-btn {
+        width: 36px;
+        height: 36px;
+        font-size: 14px;
+        padding: 6px;
     }
 
     #messageInput {
         font-size: 12px;
         padding: 8px 10px;
-        min-width: 60px;
+        min-width: 50px;
     }
 
     .status {
@@ -613,5 +737,9 @@ button:active {
     .emoji-item {
         font-size: 18px;
         padding: 2px;
+    }
+
+    .gif-results {
+        grid-template-columns: repeat(2, 1fr);
     }
 }
